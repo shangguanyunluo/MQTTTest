@@ -1,0 +1,2 @@
+{"deviceNum": "TestDeviceNum1","deviceSecreKey": "TestDeviceSecreKey1"}
+{"deviceNum": "TestDeviceNum2","deviceSecreKey": "TestDeviceSecreKey2"}

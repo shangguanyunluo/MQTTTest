@@ -1,0 +1,5 @@
+nosetests -s test_ecg_upload.py:ECGUploadTest.test_mutiple_device_concurrency_upload
+
+nosetests -s login_and_ecgupload_test.py:LoginAndEcgUploadTest.test_login_upload
+
+nosetests -s login_and_ecgupload_test.py:LoginAndEcgUploadTest.test_login_upload_with_delay
