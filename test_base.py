@@ -6,10 +6,10 @@ import json, requests, time, os
 
 class BaseTest(unittest.TestCase):
     def setUp(self):
-        self.base_url = "https://{{ipaddress}}/api/test"
+        self.base_url = "https://{{apiserver_ipaddress}}/api/test"
         self.login_url = "/device-service/device/login"
         self.logout_url = "/device-service/device/logout"
-        self.server_ip = "{{ipaddress}}"
+        self.server_ip = "{{mqttserver_ipaddress}}"
         self.server_port = "1883"
         self.username = "admin1"
         self.password = "passw0rd@"
