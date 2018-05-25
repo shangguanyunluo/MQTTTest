@@ -1,4 +1,8 @@
-nosetests -s test_ecg_upload.py:ECGUploadTest.test_mutiple_device_concurrency_upload
+nosetests -s test_ecg_upload.py:ECGUploadTest.test_mutiple_device_concurrency_upload_10
+
+nosetests -s test_ecg_upload.py:ECGUploadTest.test_mutiple_device_concurrency_upload_50
+
+nosetests -s test_ecg_upload.py:ECGUploadTest.test_mutiple_device_concurrency_upload_100
 
 nosetests -s login_and_ecgupload_test:LoginAndEcgUploadTest.test_login_upload
 
@@ -21,3 +25,5 @@ nosetests -s ecg_upload_continuously_test:ECGUploadContinuouslyTest.test_continu
 nosetests -s ech_network_failure_upload_test:ECGNetworkFailureUploadTest.test_network_latency_upload
 
 nosetests -s ech_network_failure_upload_test:ECGNetworkFailureUploadTest.test_network_pack_repeat_upload
+
+nosetests -s test_network_fault_upload.py:UploadTestWithNetFault.test_network_loss_pac

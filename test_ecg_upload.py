@@ -1,22 +1,3 @@
-#!/usr/bin/env python
-#
-# Copyright (c) 2018 Lenovo, Inc.
-# All Rights Reserved.
-#
-# Authors:
-#     Jing Chen <chenjing22@lenovo.com>
-#
-# Licensed under the Apache License, Version 2.0 (the "License"); you may
-# not use this file except in compliance with the License. You may obtain
-# a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
-# under the License.
 
 import test_base
 import requests
@@ -31,6 +12,11 @@ class ECGUploadTest(test_base.BaseTest):
 
     def setUp(self):
         test_base.BaseTest.setUp(self)
+
+        self.ecg_folder_list = []
+        self.changed_size_file_list = {}
+        self.expect_file_size = 262152
+        self.tmp_path = '/mqtt/staging.smartvest.lenovo.com/'
 
     #device login to get userID and deviceID according to deviceNum and secretKey
     def login_device(self, index):
@@ -64,18 +50,70 @@ class ECGUploadTest(test_base.BaseTest):
         print "Start testing at %s" % s_time
 
         processes = []
+        lock = multiprocessing.Lock()
         for i in range(process):
             p = multiprocessing.Process(target=self.upload_ecg, args=(i, ))
+            p.start()
             processes.append(p)
 
         for process in processes:
-            process.start()
+            process.join()
 
         e_time = self.str2datetime(datetime.now())
         print "Finish testing at %s" % e_time
 
+    def verify_no_loss_pac(self, concurency):
+        int_list = []
+        for f in self.ecg_folder_list:
+            n = f.find("ID") + 2
+            int_list.append(int(f[n:len(f)]))
 
-    def test_mutiple_device_concurrency_upload(self):
-        concurrency = 4
+        i = 1
+        while i < concurency + 1:
+            if i not in int_list:
+                print "TestDeviceID%s is not in disk" % i
+            i += 1
+
+    def verify_upload_file_size(self, f):
+        fs = os.listdir(f)
+        for f1 in fs:
+            tmp_path = os.path.join(f, f1)
+            if not os.path.isdir(tmp_path):
+                fsize = os.path.getsize(tmp_path)
+                #print("file: %s, size: %s" % (tmp_path, fsize))
+                if fsize != self.expect_file_size:
+                    self.changed_size_file_list[tmp_path] = fsize
+            else:
+                #print("folder: %s" % tmp_path)
+                sub_path = tmp_path.split('/')
+                if sub_path[-1].find("TestDeviceID") != -1:
+                    self.ecg_folder_list.append(sub_path[-1])
+                self.verify_upload_file_size(tmp_path)
+
+    def print_changed_file_size_list(self):
+        for key, value in self.changed_size_file_list.items():
+            print key, ' => size:', value
+
+    def test_mutiple_device_concurrency_upload_10(self):
+        concurrency = 10
         #self.upload_ecg(0)
         self.multi_process_ecg_upload(concurrency)
+        self.verify_upload_file_size(self.tmp_path)
+        self.print_changed_file_size_list()
+        self.verify_no_loss_pac(concurrency)
+
+    def test_mutiple_device_concurrency_upload_50(self):
+        concurrency = 50
+        #self.upload_ecg(0)
+        self.multi_process_ecg_upload(concurrency)
+        self.verify_upload_file_size(self.tmp_path)
+        self.print_changed_file_size_list()
+        self.verify_no_loss_pac(concurrency)
+
+    def test_mutiple_device_concurrency_upload_100(self):
+        concurrency = 100
+        #self.upload_ecg(0)
+        self.multi_process_ecg_upload(concurrency)
+        self.verify_upload_file_size(self.tmp_path)
+        self.print_changed_file_size_list()
+        self.verify_no_loss_pac(concurrency)
