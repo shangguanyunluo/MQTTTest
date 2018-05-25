@@ -35,5 +35,5 @@ class ECGNetworkFailureUploadTest(test_base.BaseTest):
         self.network_fault_commondl("del", "duplicate", "1%")
 
 
-if __name__ == '__main__':
-    unittest.main()
+# if __name__ == '__main__':
+#     unittest.main()

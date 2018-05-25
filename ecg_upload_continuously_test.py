@@ -83,5 +83,5 @@ class ECGUploadContinuouslyTest(test_base.BaseTest):
         print("%s ---- : %s" % ("test_continue_upload_file_1.5GB", "end"))
 
 
-if __name__ == '__main__':
-    unittest.main()
+# if __name__ == '__main__':
+#     unittest.main()

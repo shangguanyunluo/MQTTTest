@@ -28,5 +28,5 @@ class ECGUploadSpecifizedFileTest(test_base.BaseTest):
         print("%s ---- : %s" % ("testUploadFile300KB", "end"))
 
 
-if __name__ == '__main__':
-    unittest.main()
+# if __name__ == '__main__':
+#     unittest.main()
