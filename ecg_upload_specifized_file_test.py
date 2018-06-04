@@ -1,8 +1,12 @@
 #!/usr/bin/python
 # coding:utf-8
+
 import unittest
+
+import time
+
 import test_base
-import os
+import fileSizeUtil
 
 
 class ECGUploadSpecifizedFileTest(test_base.BaseTest):
@@ -28,5 +32,5 @@ class ECGUploadSpecifizedFileTest(test_base.BaseTest):
         print("%s ---- : %s" % ("testUploadFile300KB", "end"))
 
 
-# if __name__ == '__main__':
-#     unittest.main()
+if __name__ == '__main__':
+    unittest.main()

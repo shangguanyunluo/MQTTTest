@@ -1,7 +1,20 @@
 #!/usr/bin/python
 # coding:utf-8
+#
+
 
 import os
+
+import time
+
+import logging
+
+"""
+# Use demo
+#     sourceFile = "./sim_data_test_3_hours/0.bin"
+#     targetFile = "./sim_data_test_3_hours/300MB.bin"
+#     createFileWithSpecifizedSize(sourceFile, targetFile, "300mb")
+"""
 
 
 def createFileWithSpecifizedSize(sourceFile, targetFile, fileSize="1KB"):
@@ -41,7 +54,62 @@ def createFileWithSpecifizedSize(sourceFile, targetFile, fileSize="1KB"):
         target_file.close()
 
 
-# if __name__ == '__main__':
-#     sourceFile = "./sim_data_test_3_hours/0.bin"
-#     targetFile = "./sim_data_test_3_hours/300MB.bin"
-#     createFileWithSpecifizedSize(sourceFile, targetFile, "300mb")
+def data_validation(path=None, user_id=None, device_id=None, file_num=1000,
+                    file_size=262152):
+    base_path = "/root/s3data/staging.smartvest.lenovo.com/%s/%s" % (
+        user_id, device_id)
+
+    if path is not None:
+        real_path = os.path.join(base_path, path)
+    else:
+        upload_file = max(os.listdir(base_path))
+        real_path = os.path.join(base_path, upload_file)
+    logging.info("%s ,upload file path is : %s" % (user_id, real_path))
+    file_list = os.listdir(real_path)
+    num_list = range(file_num)
+    for file_name in file_list:
+
+        file_prefix = int(file_name.split("-")[0])
+        if file_prefix in num_list:
+            # print "-" * 20
+            num_list.remove(file_prefix)
+    if len(num_list) > 0:
+        logging.error("%s ,upload file fail: we should upload %s files, " \
+                      "there is %d " "files didn't upload succeed. fail "
+                      "file is : %s" % (user_id, file_num, len(num_list),
+                                        num_list))
+        raise Exception("%s,upload file fail: we should upload %s files, " \
+                        "there is %d " "files didn't upload succeed. fail "
+                        "file is : %s" % (user_id, file_num, len(num_list),
+                                          num_list))
+    logging.info("%s ,upload file number is equal with the server" % user_id)
+    data_integrity_valitation(source_data_size=file_num * file_size,
+                              target_file_path=real_path)
+
+
+def data_integrity_valitation(source_data_size, target_file_path):
+    tar_file_list = os.listdir(target_file_path)
+    target_file_size = 0
+    for tar_file in tar_file_list:
+        try:
+            tar_file = os.path.join(target_file_path, tar_file)
+            target_file_size += os.path.getsize(tar_file)
+        except:
+            logging.error("tar_file is : %s" % tar_file)
+            # time.sleep(2)
+            # target_file_size += os.path.getsize(tar_file)
+    user_id = target_file_path.split("/")[4]
+    if source_data_size != target_file_size:
+        logging.error("Upload file size is %s , actual size is %d, "
+                      "user_id is : %s." % (
+                          source_data_size, target_file_size, user_id))
+        raise Exception("Upload file size is %s , actual size is %d, "
+                        "user_id is : %s." % (
+                            source_data_size, target_file_size, user_id))
+    logging.info("%s ,the file you upload is complete." % user_id)
+
+
+if __name__ == '__main__':
+    user_id = "TestUserID16"
+    device_id = "TestDeviceID16"
+    data_validation(user_id=user_id, device_id=device_id)

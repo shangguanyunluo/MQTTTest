@@ -1,15 +1,34 @@
 #!/usr/bin/env python
 
+
 import unittest
 import json, requests, time, os
+import logging
+
+fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(levelname)s - %(message)s'
+logging.basicConfig(
+    level=logging.DEBUG,
+    # format='LINE %(lineno)-4d %(levelname)-8s %(message)s',
+    format=fmt,
+    datefmt='%Y/%m/%d %H:%M:%S',
+    filename='smartvest.log',
+    filemode='w',
+
+)
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter(fmt)
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
 
 
 class BaseTest(unittest.TestCase):
     def setUp(self):
-        self.base_url = "https://{{apiserver_ipaddress}}/api/test"
+        self.base_url = "https://43.255.224.58/api/test"
         self.login_url = "/device-service/device/login"
         self.logout_url = "/device-service/device/logout"
-        self.server_ip = "{{mqttserver_ipaddress}}"
+        self.server_ip = "43.255.224.120"
         self.server_port = "1883"
         self.username = "admin1"
         self.password = "passw0rd@"
@@ -26,30 +45,36 @@ class BaseTest(unittest.TestCase):
 
         print "The len of device info is %s" % len(self.device_info)
 
-    datefmt = "%Y-%m-%d %H:%M:%S.%f"
-
-    def str2datetime(self, s, format=datefmt):
-        dt = None
-        try:
-            dt = s.strftime(format)
-        except (ValueError):
-            dt = None
-        finally:
-            return dt
+    def str2datetime(self, now):
+        return time.strftime("%Y-%m-%d %H:%M:%S", now)
 
     def login_device(self, index=0, success_code=200000):
-        resp = requests.post(self.base_url + self.login_url,
-                             json=json.loads(self.device_info[index]),
-                             verify=False)
+        try:
+            resp = requests.post(self.base_url + self.login_url,
+                                 json=json.loads(self.device_info[index]),
+                                 verify=False)
+        except Exception as e:
+            logging.error("%s Logging fail:%s" % (index, e))
+            try:
+                resp = requests.post(self.base_url + self.login_url,
+                                     json=json.loads(self.device_info[index]),
+                                     verify=False)
+                logging.info("%s reloggin success." % (index,))
+            except:
+                logging.error("device %s login Error" % index)
+                raise Exception("device %s login fail" % index)
         user_dev_info = json.loads(resp.text)
         if success_code == eval(user_dev_info['code']):
             user_id = user_dev_info['data']['userId']
             device_id = user_dev_info['data']['deviceId']
-            print user_id + " " + device_id
+            logging.info("%s login success" % user_id)
             return user_id, device_id
         else:
+            logging.error("device %s ,user login error:%s" % (index,
+                                                              user_dev_info))
             raise Exception(
-                "user login error:%s" % user_dev_info['code'])
+                "device %s ,user login error:%s" % (index, user_dev_info[
+                    'code']))
 
     def ecg_upload(self, user_id, device_id, filname_prefix=0,
                    topic_suffix=0, delay=0, client_index=0):
@@ -71,7 +96,7 @@ class BaseTest(unittest.TestCase):
 
         topic = "sys/%s/%s/ecg/upload/%s" % (user_id, device_id, topic_suffix)
 
-        pub_cmd = 'mosquitto_pub -h %s -p %s -i client_%s  -t "%s" -u %s -P %s -d --cafile %s --insecure -r -q 1 -f %s' % (
+        pub_cmd = 'mosquitto_pub -h %s -p %s -i client_%s  -t %s -u %s -P %s -d --cafile %s --insecure -r -q 1 -f %s' % (
             self.server_ip, self.server_port, client_index, topic,
             self.username, self.password,
             self.cert_file, data_file)
@@ -83,6 +108,25 @@ class BaseTest(unittest.TestCase):
             raise Exception("Upload data error:%s" % e.message)
         print cmd_result
 
+    def ecg_upload_files(self, user_id, device_id, filname_range=(0, 100),
+                         delay=0, client_index=0):
+        """
+
+        :param user_id: 
+        :param device_id: 
+        :param filname_prefix: the file you upload
+        :param topic_suffix: the path and filename in the server
+        :param delay: delay to upload
+        :param client_index: the client who can receive the message or data
+        :return: 
+        """
+        if user_id is None or device_id is None:
+            raise Exception("user_id or device_id is null.")
+        for filname_prefix in range(filname_range[0], filname_range[-1]):
+            self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
+                            topic_suffix=filname_prefix, delay=delay,
+                            client_index=client_index)
+
     def ecg_login_upload(self, device_index=0, delay=0, filname_prefix=0,
                          topic_suffix=0, client_index=0):
         user_id, device_id = self.login_device(device_index)
@@ -90,3 +134,78 @@ class BaseTest(unittest.TestCase):
         self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
                         topic_suffix=topic_suffix, delay=delay,
                         client_index=client_index)
+        return user_id, device_id
+
+    def ecg_login_upload_files(self, device_index=0, delay=0,
+                               file_interval_delay=0, filname_range=(0, 100),
+                               client_index=0):
+        user_id, device_id = self.login_device(device_index)
+        time.sleep(delay)
+        self.ecg_upload_files(user_id, device_id, filname_range=filname_range,
+                              delay=file_interval_delay,
+                              client_index=client_index)
+        return user_id, device_id
+
+    def upload_file_intervial(self, user_id, device_id, topic_suffix="",
+                              time_period=300, time_interval=45,
+                              filname_prefix=0):
+        """
+        topic_suffix : use this to distinguish which method call this method
+        time_period : the whole time to upload files
+        time_interval : the time between you upload two files
+        file_num :the number of file you will uploads in the time_period
+        :return: 
+        """
+        # file_num = time_period / time_interval + 1
+        file_num = 0
+        start_time = time.time()
+        continue_flag = True
+        while continue_flag:
+            now_time = time.time()
+            # print "(now_time - start_time) is : %s" % (now_time - start_time)
+            if int(now_time - start_time) >= time_period:
+                continue_flag = False
+            print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
+                "topic_suffix is : %s%s" % (topic_suffix, file_num)
+
+            self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
+                            topic_suffix="%s%s" % (topic_suffix, file_num))
+            # file_num -= 1
+            file_num += 1
+            if continue_flag:
+                time.sleep(time_interval)
+        return file_num
+
+    def upload_file_intervial2(self, user_id, device_id, topic_suffix="",
+                               time_period=300, time_interval=45,
+                               filname_range=(0, 100)):
+        """
+        topic_suffix : use this to distinguish which method call this method
+        time_period : the whole time to upload files
+        time_interval : the time between you upload two files
+        file_num :the number of file you will uploads in the time_period
+        :return: 
+        """
+        file_num = time_period / time_interval + 1
+        start_time = time.time()
+        continue_flag = True
+        filname_prefix = filname_range[0]
+        while continue_flag:
+            now_time = time.time()
+            # print "(now_time - start_time) is : %s" % (now_time - start_time)
+            if int(now_time - start_time) >= time_period:
+                continue_flag = False
+
+            if filname_prefix < filname_range[-1]:
+                filname_prefix += 1
+            else:
+                filname_prefix = filname_range[0]
+
+            print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
+                "topic_suffix is : %s%s" % (topic_suffix, file_num)
+
+            self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
+                            topic_suffix="%s%s" % (topic_suffix, file_num))
+            file_num -= 1
+            if continue_flag:
+                time.sleep(time_interval)
