@@ -48,33 +48,29 @@ class BaseTest(unittest.TestCase):
     def str2datetime(self, now):
         return time.strftime("%Y-%m-%d %H:%M:%S", now)
 
-    def login_device(self, index=0, success_code=200000):
+    def login_device(self, index=0, success_code=200000, try_time=2):
         try:
-            resp = requests.post(self.base_url + self.login_url,
-                                 json=json.loads(self.device_info[index]),
-                                 verify=False)
-        except Exception as e:
-            logging.error("%s Logging fail:%s" % (index, e))
-            try:
+            login_status = False
+            for i in range(try_time):
+                # logging.info("The %s time to Login " % (i,))
                 resp = requests.post(self.base_url + self.login_url,
                                      json=json.loads(self.device_info[index]),
                                      verify=False)
-                logging.info("%s reloggin success." % (index,))
-            except:
-                logging.error("device %s login Error" % index)
-                raise Exception("device %s login fail" % index)
-        user_dev_info = json.loads(resp.text)
-        if success_code == eval(user_dev_info['code']):
+                user_dev_info = json.loads(resp.text)
+                if success_code == eval(user_dev_info['code']):
+                    # if i == 0: continue
+                    login_status = True
+                    break
+            if not login_status:
+                logging.error("%s Login fail:%s" % (index,))
+                raise Exception("%s re_login fail" % index)
             user_id = user_dev_info['data']['userId']
             device_id = user_dev_info['data']['deviceId']
             logging.info("%s login success" % user_id)
             return user_id, device_id
-        else:
-            logging.error("device %s ,user login error:%s" % (index,
-                                                              user_dev_info))
-            raise Exception(
-                "device %s ,user login error:%s" % (index, user_dev_info[
-                    'code']))
+        except Exception as e:
+            logging.error("%s Login fail:%s" % (index, e))
+            raise Exception("%s login fail" % index)
 
     def ecg_upload(self, user_id, device_id, filname_prefix=0,
                    topic_suffix=0, delay=0, client_index=0):
