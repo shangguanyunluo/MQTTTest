@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
+import logging
 import multiprocessing
-import os
 import time
 import unittest
-
-import logging
 
 import fileSizeUtil
 import test_base
@@ -18,6 +16,7 @@ class ECGUploadTest(test_base.BaseTest):
         self.ecg_folder_list = []
         self.changed_size_file_list = {}
         self.expect_file_size = 262152
+        # the file path you upload the file to
         self.tmp_path = '/root/s3data/staging.smartvest.lenovo.com/'
 
     # upload ECG data

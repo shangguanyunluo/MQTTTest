@@ -52,7 +52,7 @@ class BaseTest(unittest.TestCase):
         try:
             login_status = False
             for i in range(try_time):
-                # logging.info("The %s time to Login " % (i,))
+                # logging.info("Device %s, The %s time to Login " % (index, i,))
                 resp = requests.post(self.base_url + self.login_url,
                                      json=json.loads(self.device_info[index]),
                                      verify=False)
@@ -61,7 +61,7 @@ class BaseTest(unittest.TestCase):
                     # if i == 0: continue
                     login_status = True
                     break
-
+            # logging.info("login_status is %s" % login_status)
             if not login_status:
                 logging.error("%s Login fail:%s" % (index,))
                 raise Exception("%s re_login fail" % index)
@@ -99,12 +99,16 @@ class BaseTest(unittest.TestCase):
             self.username, self.password,
             self.cert_file, data_file)
 
-        print "pub_cmd is : %s" % pub_cmd
+        logging.info("pub_cmd is : %s" % pub_cmd)
         try:
-            cmd_result = os.system(pub_cmd)
-        except Exception as e:
-            raise Exception("Upload data error:%s" % e.message)
-        print cmd_result
+            response = os.system(pub_cmd)
+            if response != 0:
+                response = os.system(pub_cmd)
+        except:
+            response = os.system(pub_cmd)
+        finally:
+            logging.info("%s file num %d response is : %s" % (
+                user_id, topic_suffix, response))
 
     def ecg_upload2(self, user_id, device_id, upload_file_num=1,
                     source_filname_range=100, client_index=0, delay=0,
@@ -148,22 +152,22 @@ class BaseTest(unittest.TestCase):
                     logging.info("%s file num %d response is : %s" % (
                         user_id, topic_suffix, response))
 
-    def ecg_upload_files(self, user_id, device_id, filname_range=(0, 100),
-                         delay=0, client_index=0):
-        """
-
-        :param user_id: 
-        :param device_id: 
-        :param filname_prefix: the file you upload
-        :param topic_suffix: the path and filename in the server
-        :param delay: delay to upload
-        :param client_index: the client who can receive the message or data
-        :return: 
-        """
-        for filname_prefix in range(filname_range[0], filname_range[-1]):
-            self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
-                            topic_suffix=filname_prefix, delay=delay,
-                            client_index=client_index)
+    # def ecg_upload_files(self, user_id, device_id, filname_range=(0, 100),
+    #                      delay=0, client_index=0):
+    #     """
+    #
+    #     :param user_id:
+    #     :param device_id:
+    #     :param filname_prefix: the file you upload
+    #     :param topic_suffix: the path and filename in the server
+    #     :param delay: delay to upload
+    #     :param client_index: the client who can receive the message or data
+    #     :return:
+    #     """
+    #     for filname_prefix in range(filname_range[0], filname_range[-1]):
+    #         self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
+    #                         topic_suffix=filname_prefix, delay=delay,
+    #                         client_index=client_index)
 
     def ecg_login_upload(self, device_index=0, delay=0, filname_prefix=0,
                          topic_suffix=0, client_index=0):
@@ -174,25 +178,14 @@ class BaseTest(unittest.TestCase):
                         client_index=client_index)
         return user_id, device_id
 
-    def ecg_login_upload_files(self, device_index=0, delay=0,
-                               file_interval_delay=0, filname_range=(0, 100),
-                               client_index=0):
-        user_id, device_id = self.login_device(device_index)
-        time.sleep(delay)
-        self.ecg_upload_files(user_id, device_id, filname_range=filname_range,
-                              delay=file_interval_delay,
-                              client_index=client_index)
-        return user_id, device_id
-
-    def upload_file_intervial(self, user_id, device_id, topic_suffix="",
-                              time_period=300, time_interval=45,
-                              filname_prefix=0):
+    def upload_file_intervial(self, user_id, device_id, time_period=300,
+                              time_interval=45, source_filname_range=100):
         """
         topic_suffix : use this to distinguish which method call this method
         time_period : the whole time to upload files
         time_interval : the time between you upload two files
         file_num :the number of file you will uploads in the time_period
-        :return: 
+        :return:
         """
         file_num = 0
         start_time = time.time()
@@ -201,41 +194,12 @@ class BaseTest(unittest.TestCase):
             now_time = time.time()
             if int(now_time - start_time) >= time_period:
                 continue_flag = False
-            print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
-                "topic_suffix is : %s%s" % (topic_suffix, file_num)
+
+            filname_prefix = file_num % source_filname_range
 
             self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
-                            topic_suffix="%s%s" % (topic_suffix, file_num))
+                            topic_suffix=file_num)
             file_num += 1
-            if continue_flag:
-                time.sleep(time_interval)
-        return file_num
-
-    def upload_file_intervial2(self, user_id, device_id, topic_suffix="",
-                               time_period=300, time_interval=45,
-                               filname_range=(0, 100)):
-        """
-        topic_suffix : use this to distinguish which method call this method
-        time_period : the whole time to upload files
-        time_interval : the time between you upload two files
-        file_num :the number of file you will uploads in the time_period
-        :return: 
-        """
-        file_num = 0
-        start_time = time.time()
-        continue_flag = True
-        filname_prefix = filname_range[0]
-        while continue_flag:
-            now_time = time.time()
-            if int(now_time - start_time) >= time_period:
-                continue_flag = False
-
-            filname_prefix %= filname_range[-1]
-
-            self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
-                            topic_suffix="%s%s" % (topic_suffix, file_num))
-            file_num += 1
-            filname_prefix += 1
             if continue_flag:
                 time.sleep(time_interval)
         return file_num

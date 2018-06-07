@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#
 
 import json
 import os
@@ -58,9 +57,9 @@ class UploadTestWithNetFault(test_base.BaseTest):
         line = child.stdout.readline()
         print line
 
-    @unittest.skip("test_network_loss_pac")
+    # @unittest.skip("test_network_loss_pac")
     def test_network_loss_pac(self):
-        self.upload_ecg_data(device_index=16, file_number=10)
+        self.upload_ecg_data(device_index=9, file_number=10)
 
     def tearDown(self):
         self.remove_loss_pack()

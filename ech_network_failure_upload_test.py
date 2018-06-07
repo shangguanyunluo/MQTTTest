@@ -16,14 +16,16 @@ class ECGNetworkFailureUploadTest(test_base.BaseTest):
         print "network command:%s" % cmd
         os.system(cmd)
 
-    @unittest.skip("test_network_latency_upload")
+    # @unittest.skip("test_network_latency_upload")
     def test_network_latency_upload(self):
         try:
             self.network_fault_commondl("eth0", "add")
             time.sleep(1)
-            user_id, device_id = self.login_device(17)
-            # self.ecg_upload(user_id, device_id, topic_suffix="net_latency")
-            self.ecg_upload_files(user_id, device_id)
+            device_index = 1
+            user_id, device_id = self.login_device(device_index)
+
+            self.ecg_upload2(user_id, device_id, upload_file_num=100,
+                             client_index=device_index)
 
             time.sleep(15)
             fileSizeUtil.data_validation(user_id=user_id, device_id=device_id,
@@ -31,14 +33,16 @@ class ECGNetworkFailureUploadTest(test_base.BaseTest):
         finally:
             self.network_fault_commondl("eth0", "del")
 
-    @unittest.skip("test_network_pack_repeat_upload")
+    # @unittest.skip("test_network_pack_repeat_upload")
     def test_network_pack_repeat_upload(self):
         try:
             self.network_fault_commondl("eth0", "add", "duplicate", "1%")
             time.sleep(1)
-            user_id, device_id = self.login_device(18)
-            # self.ecg_upload(user_id, device_id, topic_suffix="pack_repeat")
-            self.ecg_upload_files(user_id, device_id)
+            device_index = 1
+            user_id, device_id = self.login_device(device_index)
+
+            self.ecg_upload2(user_id, device_id, upload_file_num=100,
+                             client_index=device_index)
             time.sleep(15)
             fileSizeUtil.data_validation(user_id=user_id, device_id=device_id,
                                          file_num=100)

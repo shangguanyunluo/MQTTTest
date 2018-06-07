@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # coding:utf-8
-#
 
 
 import os
@@ -54,8 +53,10 @@ def createFileWithSpecifizedSize(sourceFile, targetFile, fileSize="1KB"):
         target_file.close()
 
 
-def data_validation(path=None, user_id=None, device_id=None, file_num=1000,
+def data_validation(path=None, user_id=None, device_id=None, file_num=0,
                     file_size=262152):
+    if not file_num:
+        return
     base_path = "/root/s3data/staging.smartvest.lenovo.com/%s/%s" % (
         user_id, device_id)
 
