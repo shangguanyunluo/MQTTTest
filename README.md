@@ -1,8 +1,9 @@
-# MQTTTest
-并发上传数据
-底座登录成功后立即上传数据
-300秒内连续上传数据
-上传不同大小数据文件
-连续上传数据大于300秒
-连续上传1.5G数据
-模拟网络故障的情况下上传
+1.copy the files that need to be uploaded to the directory:sim_data_test_3_hours(262152B)
+
+2.The file name should be sequential, starting with the number 0 to 99
+
+3.Create files of size and name 0 B, 256 KB, and 300KB, respectively
+
+4.Use "sh run.sh" to start executing all the case
+
+5.If some cases are not executed, please check if "@unittest.skip()" in the file is commented
