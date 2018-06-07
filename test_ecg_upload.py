@@ -1,5 +1,23 @@
 #!/usr/bin/env python
 #
+# Copyright (c) 2018 Lenovo, Inc.
+# All Rights Reserved.
+#
+# Authors:
+#     Jing Chen <chenjing22@lenovo.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+# from multiprocessing import Pool
 import multiprocessing
 import os
 import time
@@ -21,50 +39,26 @@ class ECGUploadTest(test_base.BaseTest):
         self.tmp_path = '/root/s3data/staging.smartvest.lenovo.com/'
 
     # upload ECG data
-    def upload_ecg(self, device_index, client_count=1):
+    def upload_ecg_data(self, device_index, file_number=1):
 
         user_id, device_id = self.login_device(device_index)
-        if not client_count:
-            client_count = 1
-        for n in range(client_count):
-            file_name = n
-            if n > 99:
-                file_name = n % 99
-            topic = "sys/%s/%s/ecg/upload/%s" % (user_id, device_id, n)
-            data_file = os.path.join(self.ecg_file_path,
-                                     str(file_name) + '.bin')
-            pub_cmd = 'mosquitto_pub -h %s -p %s -i client_%s  -t "%s" -u %s -P %s -d --cafile %s --insecure -r -q 1 -f %s' % (
-                self.server_ip, self.server_port, device_index, topic,
-                self.username, self.password,
-                self.cert_file, data_file)
 
-            logging.info(pub_cmd)
-            try:
-                response = os.system(pub_cmd)
-                if response != 0:
-                    response = os.system(pub_cmd)
+        self.ecg_upload2(user_id, device_id, upload_file_num=file_number,
+                         client_index=device_index)
 
-            except Exception as e:
-                response = os.system(pub_cmd)
-            finally:
-                logging.info("%s file num %d response is : %s" % (user_id, n,
-                                                                  response))
-
-        time.sleep(15)
+        time.sleep(20)
         fileSizeUtil.data_validation(user_id=user_id, device_id=device_id,
-                                     file_num=client_count,
-                                     file_size=self.expect_file_size)
+                                     file_num=file_number)
 
-    def multi_process_ecg_upload(self, process, client_count=10):
+    def multi_process_ecg_upload(self, process_num, file_number=10):
 
         logging.info(
             "Start testing at %s" % self.str2datetime(time.localtime()))
 
         processes = []
-        lock = multiprocessing.Lock()
-        for i in range(process):
-            p = multiprocessing.Process(target=self.upload_ecg,
-                                        args=(i, client_count))
+        for device_index in range(process_num):
+            p = multiprocessing.Process(target=self.upload_ecg_data,
+                                        args=(device_index, file_number))
             p.start()
             processes.append(p)
 
@@ -82,15 +76,12 @@ class ECGUploadTest(test_base.BaseTest):
     @unittest.skip("test_mutiple_device_concurrency_upload_10")
     def test_mutiple_device_concurrency_upload_10(self):
         concurrency = 10
-        self.multi_process_ecg_upload(concurrency,2000)
+        self.multi_process_ecg_upload(concurrency, 2000)
 
     @unittest.skip("test_mutiple_device_concurrency_upload_50")
     def test_mutiple_device_concurrency_upload_50(self):
-        print '----'
         concurrency = 50
-        self.multi_process_ecg_upload(concurrency, 1000)
-        # concurrency = 1
-        # self.multi_process_ecg_upload(concurrency, 2)
+        self.multi_process_ecg_upload(concurrency, 2000)
 
     @unittest.skip("test_mutiple_device_concurrency_upload_70")
     def test_mutiple_device_concurrency_upload_70(self):
@@ -100,7 +91,7 @@ class ECGUploadTest(test_base.BaseTest):
     @unittest.skip("test_mutiple_device_concurrency_upload_100")
     def test_mutiple_device_concurrency_upload_100(self):
         concurrency = 100
-        self.multi_process_ecg_upload(concurrency, 1000)
+        self.multi_process_ecg_upload(concurrency, file_number=0)
 
 
 if __name__ == '__main__':

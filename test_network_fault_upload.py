@@ -1,5 +1,23 @@
 #!/usr/bin/env python
 #
+# Copyright (c) 2018 Lenovo, Inc.
+# All Rights Reserved.
+#
+# Authors:
+#     Jing Chen <chenjing22@lenovo.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
 import json
 import os
 # from multiprocessing import Pool
@@ -9,6 +27,7 @@ import requests
 import fileSizeUtil
 import test_base
 import time
+
 
 class UploadTestWithNetFault(test_base.BaseTest):
     def setUp(self):
@@ -20,34 +39,16 @@ class UploadTestWithNetFault(test_base.BaseTest):
 
         self.random_package_loss(self.network, self.loss_start, self.loss_end)
 
-    # device login to get userID and deviceID according to deviceNum and secretKey
-    def login_device(self, index):
-        resp = requests.post(self.base_url + self.login_url,
-                             json=json.loads(self.device_info[index]),
-                             verify=False)
-        user_dev_info = json.loads(resp.text)
-        user_id = user_dev_info['data']['userId']
-        device_id = user_dev_info['data']['deviceId']
-        print user_id + " " + device_id
-        return user_id, device_id
-
     # upload ECG data
-    def upload_ecg(self, device_index):
+    def upload_ecg_data(self, device_index, file_number=100):
         user_id, device_id = self.login_device(device_index)
-        client_count = 100
-        for n in range(client_count):
-            topic = "sys/%s/%s/ecg/upload/%s" % (user_id, device_id, n)
-            data_file = os.path.join(self.ecg_file_path, str(n) + '.bin')
-            pub_cmd = 'mosquitto_pub -h %s -p %s -i client_%s  -t "%s" -u %s -P %s -d --cafile %s --insecure -r -q 1 -f %s' % (
-                self.server_ip, self.server_port, device_index, topic,
-                self.username, self.password,
-                self.cert_file, data_file)
 
-            print pub_cmd
-            os.system(pub_cmd)
+        self.ecg_upload2(user_id, device_id, upload_file_num=file_number,
+                         client_index=device_index, test_mode=False)
+
         time.sleep(15)
         fileSizeUtil.data_validation(user_id=user_id, device_id=device_id,
-                                     file_num=client_count)
+                                     file_num=file_number)
 
     def random_package_loss(self, network, start, end):
         cmd_check = "tc qdisc"
@@ -63,7 +64,7 @@ class UploadTestWithNetFault(test_base.BaseTest):
         line = child.stdout.readline()
         print line
 
-    def remove_loss_pack(self, network):
+    def remove_loss_pack(self):
         cmd = "tc qdisc del dev %s root" % self.network
         os.system(cmd)
 
@@ -74,14 +75,12 @@ class UploadTestWithNetFault(test_base.BaseTest):
         line = child.stdout.readline()
         print line
 
+    @unittest.skip("test_network_loss_pac")
     def test_network_loss_pac(self):
-        concurrency = 1
-        # self.upload_ecg(0)
-        # self.multi_process_ecg_upload(concurrency)
-        self.upload_ecg(16)
+        self.upload_ecg_data(device_index=16, file_number=10)
 
     def tearDown(self):
-        self.remove_loss_pack(self.network)
+        self.remove_loss_pack()
 
 
 if __name__ == '__main__':

@@ -61,7 +61,7 @@ class BaseTest(unittest.TestCase):
                     # if i == 0: continue
                     login_status = True
                     break
-                    
+
             if not login_status:
                 logging.error("%s Login fail:%s" % (index,))
                 raise Exception("%s re_login fail" % index)
@@ -107,7 +107,8 @@ class BaseTest(unittest.TestCase):
         print cmd_result
 
     def ecg_upload2(self, user_id, device_id, upload_file_num=1,
-                    source_filname_range=100, client_index=0, delay=0):
+                    source_filname_range=100, client_index=0, delay=0,
+                    test_mode=False):
         """
         :param user_id: 
         :param device_id: 
@@ -136,15 +137,16 @@ class BaseTest(unittest.TestCase):
                 self.cert_file, data_file)
 
             logging.info("pub_cmd is : %s" % pub_cmd)
-            try:
-                response = os.system(pub_cmd)
-                if response != 0:
+            if not test_mode:
+                try:
                     response = os.system(pub_cmd)
-            except:
-                response = os.system(pub_cmd)
-            finally:
-                logging.info("%s file num %d response is : %s" % (
-                    user_id, topic_suffix, response))
+                    if response != 0:
+                        response = os.system(pub_cmd)
+                except:
+                    response = os.system(pub_cmd)
+                finally:
+                    logging.info("%s file num %d response is : %s" % (
+                        user_id, topic_suffix, response))
 
     def ecg_upload_files(self, user_id, device_id, filname_range=(0, 100),
                          delay=0, client_index=0):
