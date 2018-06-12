@@ -25,13 +25,13 @@ logging.getLogger('').addHandler(console)
 
 class BaseTest(unittest.TestCase):
     def setUp(self):
-        self.base_url = "https://43.255.224.58/api/test"
+        self.base_url = "https://rest_sert_address/api/test"
         self.login_url = "/device-service/device/login"
         self.logout_url = "/device-service/device/logout"
-        self.server_ip = "43.255.224.120"
+        self.server_ip = "mqtt_sert_address"
         self.server_port = "1883"
-        self.username = "admin1"
-        self.password = "passw0rd@"
+        self.username = "admin"
+        self.password = "password"
         self.cert_file = "./ca.crt"
         self.ecg_file_path = "./sim_data_test_3_hours/"
         self.device_info = []
@@ -116,8 +116,8 @@ class BaseTest(unittest.TestCase):
         """
         :param user_id: 
         :param device_id: 
-        :param filname_prefix: the file you upload
-        :param topic_suffix: the path and filename in the server
+        :param upload_file_num: the file numbers you will upload
+        :param source_filname_range: how many files you have
         :param delay: delay to upload
         :param client_index: the client who can receive the message or data
         :return: 
@@ -151,23 +151,6 @@ class BaseTest(unittest.TestCase):
                 finally:
                     logging.info("%s file num %d response is : %s" % (
                         user_id, topic_suffix, response))
-
-    # def ecg_upload_files(self, user_id, device_id, filname_range=(0, 100),
-    #                      delay=0, client_index=0):
-    #     """
-    #
-    #     :param user_id:
-    #     :param device_id:
-    #     :param filname_prefix: the file you upload
-    #     :param topic_suffix: the path and filename in the server
-    #     :param delay: delay to upload
-    #     :param client_index: the client who can receive the message or data
-    #     :return:
-    #     """
-    #     for filname_prefix in range(filname_range[0], filname_range[-1]):
-    #         self.ecg_upload(user_id, device_id, filname_prefix=filname_prefix,
-    #                         topic_suffix=filname_prefix, delay=delay,
-    #                         client_index=client_index)
 
     def ecg_login_upload(self, device_index=0, delay=0, filname_prefix=0,
                          topic_suffix=0, client_index=0):

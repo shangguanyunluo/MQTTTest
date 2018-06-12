@@ -110,7 +110,23 @@ def data_integrity_valitation(source_data_size, target_file_path):
     logging.info("%s ,the file you upload is complete." % user_id)
 
 
+def validate_upload_files(process_num=1, file_num=0, file_size=262152):
+    if process_num < 1:
+        return
+    upload_process_error_number = 0
+    process_num += 1
+    for i in range(1, process_num):
+        try:
+            user_id = "TestUserID%s" % i
+            device_id = "TestDeviceID%s" % i
+            data_validation(user_id=user_id, device_id=device_id,
+                            file_num=file_num, file_size=file_size)
+        except:
+            upload_process_error_number += 1
+            pass
+    return upload_process_error_number
+
+
 if __name__ == '__main__':
-    user_id = "TestUserID16"
-    device_id = "TestDeviceID16"
-    data_validation(user_id=user_id, device_id=device_id)
+    print validate_upload_files(50, 1000)
+    pass

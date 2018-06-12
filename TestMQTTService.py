@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#
 
 
 import json
@@ -9,11 +10,11 @@ from datetime import datetime
 from multiprocessing import Pool
 
 concurrency = 50
-base_url = "https://43.255.224.58/api/test"
-server_ip = "43.255.224.120"
+base_url = "https://rest_sert_address/api/test"
+server_ip = "mqtt_sert_address"
 server_port = "1883"
-username = "admin1"
-password = "passw0rd@"
+username = "admin"
+password = "password"
 cert_file = "./ca.crt"
 login_url = "/device-service/device/login"
 ecg_file_path = "./sim_data_test_3_hours/"
