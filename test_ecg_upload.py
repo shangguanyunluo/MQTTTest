@@ -10,6 +10,7 @@ import test_base
 
 
 class ECGUploadTest(test_base.BaseTest):
+
     def setUp(self):
         test_base.BaseTest.setUp(self)
 
@@ -58,11 +59,11 @@ class ECGUploadTest(test_base.BaseTest):
 
         # to check the files you upload,if there is some files fail to upload
         time.sleep(process_num / 2)
-        upload_process_error_number = fileSizeUtil.validate_upload_files(
+        upload_process_error_number, upload_fail_list = fileSizeUtil.validate_upload_files(
             process_num=process_num, file_num=file_number,
             file_size=self.expect_file_size)
-        logging.info(
-            "upload_process_error_number ==== %s" % upload_process_error_number)
+        logging.info("upload_process_error_number :%s, upload_fail_list : %s" % \
+                      (upload_process_error_number, upload_fail_list))
         logging.info(
             "Finish testing at %s" % self.str2datetime(time.localtime()))
         if upload_process_error_number > 0 or login_process_error_number > 0:

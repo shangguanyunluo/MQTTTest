@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # coding:utf-8
 
-
 import os
 
 import time
@@ -114,6 +113,7 @@ def validate_upload_files(process_num=1, file_num=0, file_size=262152):
     if process_num < 1:
         return
     upload_process_error_number = 0
+    upload_fail_list = []
     process_num += 1
     for i in range(1, process_num):
         try:
@@ -123,8 +123,9 @@ def validate_upload_files(process_num=1, file_num=0, file_size=262152):
                             file_num=file_num, file_size=file_size)
         except:
             upload_process_error_number += 1
+            upload_fail_list.append(user_id)
             pass
-    return upload_process_error_number
+    return upload_process_error_number, upload_fail_list
 
 
 if __name__ == '__main__':
